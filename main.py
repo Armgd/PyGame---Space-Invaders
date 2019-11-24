@@ -1,5 +1,6 @@
 import pygame
 import random
+import math
 # Init Pygame
 pygame.init()
 
@@ -24,7 +25,7 @@ playerX_change = 0
 # Alien
 alienImg = pygame.transform.smoothscale(pygame.image.load('alien.png'), (
  64, 64))
-alienX = random.randint(0, 800)
+alienX = random.randint(0, 735)
 alienY = random.randint(50, 150)
 alienX_change = 4
 alienY_change = 40
@@ -38,6 +39,8 @@ bulletY_change = 10
 # Ready - Can't see the bullet on screen
 # Fire - Bullet Moving
 bullet_state = "ready"
+
+score = 0
 
 
 def player(x, y):
@@ -54,6 +57,15 @@ def fire_bullet(x, y):
     screen.blit(bulletImg, (x + 16, y + 10))
 
 
+def isCollision(alienX, alienY, bulletX, bulletY):
+    distance = math.sqrt((math.pow(alienX-bulletX, 2)) + (math.pow(
+        alienY-bulletY, 2)))
+    if distance < 27:
+        return True
+    else:
+        return False
+
+
 # Game Loop
 running = True
 while running:
@@ -66,13 +78,15 @@ while running:
 
         # Check keystroke L or R
         if event.type == pygame.KEYDOWN:
-            print("Key pressed")
             if event.key == pygame.K_LEFT:
                 playerX_change = -5
             if event.key == pygame.K_RIGHT:
                 playerX_change = 5
             if event.key == pygame.K_SPACE:
-                fire_bullet(playerX, bulletY)
+                if bullet_state == "ready":
+                    # Get the current X coordinate of the spaceship
+                    bulletX = playerX
+                    fire_bullet(bulletX, bulletY)
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                 playerX_change = 0
@@ -96,9 +110,23 @@ while running:
         alienY += alienY_change
 
     # Bullet Movement
+    if bulletY <= 0:
+        bulletY = 480
+        bullet_state = "ready"
+
     if bullet_state == "fire":
-        fire_bullet(playerX, bulletY)
+        fire_bullet(bulletX, bulletY)
         bulletY -= bulletY_change
+
+    # Collision
+    collision = isCollision(alienX, alienY, bulletX, bulletY)
+    if collision:
+        bulletY = 480
+        bullet_state = "ready"
+        score += 1
+        print(score)
+        alienX = random.randint(0, 735)
+        alienY = random.randint(50, 150)
 
     player(playerX, playerY)
     alien(alienX, alienY)
